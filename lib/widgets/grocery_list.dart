@@ -27,6 +27,13 @@ class _GroceryListState extends State<GroceryList> {
 
     final response = await http.get(url);
 
+    if (response.body == 'null') {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     if (response.statusCode >= 400) {
       setState(() {
         _error = 'Something went wrong! Please refresh the list.';
