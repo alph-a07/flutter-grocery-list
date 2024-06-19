@@ -31,6 +31,7 @@ class _GroceryListState extends State<GroceryList> {
       setState(() {
         _error = 'Something went wrong! Please refresh the list.';
       });
+      return;
     }
 
     final Map<String, dynamic> data = json.decode(response.body);
@@ -69,6 +70,11 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
+  Future<void> _handleRefresh() async {
+    _error = null; // reset error status
+    _loadItems();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -82,7 +88,17 @@ class _GroceryListState extends State<GroceryList> {
         title: const Text('Your Groceries'),
       ),
       body: _error != null
-          ? Center(child: Text(_error!))
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_error!),
+                  TextButton(
+                      onPressed: _handleRefresh,
+                      child: const Text('Refresh now'))
+                ],
+              ),
+            )
           : _isLoading
               ? const Center(
                   child: CircularProgressIndicator(),
