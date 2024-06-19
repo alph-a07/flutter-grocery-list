@@ -16,6 +16,7 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
+  bool _isLoading = true;
 
   void _loadItems() async {
     final url = Uri.https(
@@ -42,6 +43,7 @@ class _GroceryListState extends State<GroceryList> {
 
     setState(() {
       _groceryItems = dataList;
+      _isLoading = false;
     });
   }
 
@@ -71,29 +73,34 @@ class _GroceryListState extends State<GroceryList> {
       appBar: AppBar(
         title: const Text('Your Groceries'),
       ),
-      body: _groceryItems.isEmpty
+      body: _isLoading
           ? const Center(
-              child: Text('You have no items in the list! Try adding some.'))
-          : ListView.builder(
-              itemCount: _groceryItems.length,
-              itemBuilder: (ctx, i) => Dismissible(
-                onDismissed: (_) {
-                  setState(() {
-                    _groceryItems.remove(_groceryItems[i]);
-                  });
-                },
-                key: ValueKey(_groceryItems[i].id),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.square_rounded,
-                    color: _groceryItems[i].category.color,
-                    size: 24,
+              child: CircularProgressIndicator(),
+            )
+          : _groceryItems.isEmpty
+              ? const Center(
+                  child:
+                      Text('You have no items in the list! Try adding some.'))
+              : ListView.builder(
+                  itemCount: _groceryItems.length,
+                  itemBuilder: (ctx, i) => Dismissible(
+                    onDismissed: (_) {
+                      setState(() {
+                        _groceryItems.remove(_groceryItems[i]);
+                      });
+                    },
+                    key: ValueKey(_groceryItems[i].id),
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.square_rounded,
+                        color: _groceryItems[i].category.color,
+                        size: 24,
+                      ),
+                      title: Text(_groceryItems[i].name),
+                      trailing: Text(_groceryItems[i].quantity.toString()),
+                    ),
                   ),
-                  title: Text(_groceryItems[i].name),
-                  trailing: Text(_groceryItems[i].quantity.toString()),
                 ),
-              ),
-            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addItem,
         child: const Icon(Icons.add),
