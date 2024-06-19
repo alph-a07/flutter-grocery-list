@@ -17,6 +17,7 @@ class GroceryList extends StatefulWidget {
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
   bool _isLoading = true;
+  String? _error;
 
   void _loadItems() async {
     final url = Uri.https(
@@ -25,6 +26,13 @@ class _GroceryListState extends State<GroceryList> {
     );
 
     final response = await http.get(url);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = 'Something went wrong! Please refresh the list.';
+      });
+    }
+
     final Map<String, dynamic> data = json.decode(response.body);
     final List<GroceryItem> dataList = [];
 
@@ -73,34 +81,36 @@ class _GroceryListState extends State<GroceryList> {
       appBar: AppBar(
         title: const Text('Your Groceries'),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : _groceryItems.isEmpty
+      body: _error != null
+          ? Center(child: Text(_error!))
+          : _isLoading
               ? const Center(
-                  child:
-                      Text('You have no items in the list! Try adding some.'))
-              : ListView.builder(
-                  itemCount: _groceryItems.length,
-                  itemBuilder: (ctx, i) => Dismissible(
-                    onDismissed: (_) {
-                      setState(() {
-                        _groceryItems.remove(_groceryItems[i]);
-                      });
-                    },
-                    key: ValueKey(_groceryItems[i].id),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.square_rounded,
-                        color: _groceryItems[i].category.color,
-                        size: 24,
+                  child: CircularProgressIndicator(),
+                )
+              : _groceryItems.isEmpty
+                  ? const Center(
+                      child: Text(
+                          'You have no items in the list! Try adding some.'))
+                  : ListView.builder(
+                      itemCount: _groceryItems.length,
+                      itemBuilder: (ctx, i) => Dismissible(
+                        onDismissed: (_) {
+                          setState(() {
+                            _groceryItems.remove(_groceryItems[i]);
+                          });
+                        },
+                        key: ValueKey(_groceryItems[i].id),
+                        child: ListTile(
+                          leading: Icon(
+                            Icons.square_rounded,
+                            color: _groceryItems[i].category.color,
+                            size: 24,
+                          ),
+                          title: Text(_groceryItems[i].name),
+                          trailing: Text(_groceryItems[i].quantity.toString()),
+                        ),
                       ),
-                      title: Text(_groceryItems[i].name),
-                      trailing: Text(_groceryItems[i].quantity.toString()),
                     ),
-                  ),
-                ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addItem,
         child: const Icon(Icons.add),
