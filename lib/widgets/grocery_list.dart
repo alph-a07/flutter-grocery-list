@@ -70,6 +70,37 @@ class _GroceryListState extends State<GroceryList> {
     });
   }
 
+  void _removeItem(GroceryItem item) async {
+    final index = _groceryItems.indexOf(item); // Grab the index
+
+    // Remove item from frontend
+    setState(() {
+      _groceryItems.remove(item);
+    });
+
+    final url = Uri.https(
+      'flutter-grocery-list-a6dc6-default-rtdb.firebaseio.com',
+      'shopping-list/${item.id}.json',
+    );
+
+    // Remove it from the backend
+    final response = await http.delete(url);
+
+    // Undo the deletion if backend throws an error
+    if (response.statusCode >= 400) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unexpected error occurred! Could not delete item!'),
+          ),
+        );
+      }
+      setState(() {
+        _groceryItems.insert(index, item);
+      });
+    }
+  }
+
   Future<void> _handleRefresh() async {
     _error = null; // reset error status
     _loadItems();
@@ -111,9 +142,7 @@ class _GroceryListState extends State<GroceryList> {
                       itemCount: _groceryItems.length,
                       itemBuilder: (ctx, i) => Dismissible(
                         onDismissed: (_) {
-                          setState(() {
-                            _groceryItems.remove(_groceryItems[i]);
-                          });
+                          _removeItem(_groceryItems[i]);
                         },
                         key: ValueKey(_groceryItems[i].id),
                         child: ListTile(
