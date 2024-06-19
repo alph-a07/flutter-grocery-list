@@ -25,42 +25,48 @@ class _GroceryListState extends State<GroceryList> {
       'shopping-list.json',
     );
 
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    if (response.body == 'null') {
+      if (response.body == 'null') {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = 'Something went wrong! Please refresh the list.';
+        });
+        return;
+      }
+
+      final Map<String, dynamic> data = json.decode(response.body);
+      final List<GroceryItem> dataList = [];
+
+      for (final item in data.entries) {
+        final category = categories.entries
+            .firstWhere((category) =>
+                category.value.categoryName == item.value['category'])
+            .value;
+
+        dataList.add(GroceryItem(
+            id: item.key,
+            name: item.value['name'],
+            quantity: item.value['quantity'],
+            category: category));
+      }
+
       setState(() {
+        _groceryItems = dataList;
         _isLoading = false;
       });
-      return;
-    }
-
-    if (response.statusCode >= 400) {
+    } catch (e) {
       setState(() {
-        _error = 'Something went wrong! Please refresh the list.';
+        _error = 'Something went wrong! Please try again!';
       });
-      return;
     }
-
-    final Map<String, dynamic> data = json.decode(response.body);
-    final List<GroceryItem> dataList = [];
-
-    for (final item in data.entries) {
-      final category = categories.entries
-          .firstWhere((category) =>
-              category.value.categoryName == item.value['category'])
-          .value;
-
-      dataList.add(GroceryItem(
-          id: item.key,
-          name: item.value['name'],
-          quantity: item.value['quantity'],
-          category: category));
-    }
-
-    setState(() {
-      _groceryItems = dataList;
-      _isLoading = false;
-    });
   }
 
   void _addItem() async {
